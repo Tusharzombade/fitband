@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FitBand Phone</title>
+<style>
+:root{color-scheme:light;--page:#f4f3f0;--surface-1:#fcfcfb;--border:#e3e1db;--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#85837d;--grid:#e9e7e1;--series-1:#2a78d6;--on-accent:#ffffff}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--page:#111110;--surface-1:#1a1a19;--border:#2e2e2c;--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#8d8c85;--grid:#2a2a28;--series-1:#3987e5;--on-accent:#ffffff}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--text-primary);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+h1{font-size:20px;margin:0;font-weight:650}
+h2{font-size:14px;margin:0 0 2px;font-weight:600}
+.sub{color:var(--text-secondary);font-size:13px;margin:0 0 8px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface-1);border-radius:999px;padding:4px 10px;font-size:13px;color:var(--text-secondary);white-space:nowrap}
+.dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--text-muted)}
+.dot.on{background:var(--series-1);border-color:var(--series-1)}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.hero{display:flex;align-items:baseline;gap:8px}
+.hero b{font-size:64px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.hero span{font-size:18px;color:var(--text-secondary)}
+.row{display:flex;gap:12px}
+.row .card{flex:1;min-width:0}
+.k{font-size:12px;color:var(--text-secondary)}
+.v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.d{font-size:12px;color:var(--text-muted)}
+button{font:inherit;border-radius:10px;border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);padding:10px 14px;min-height:44px;cursor:pointer}
+button.primary{background:var(--series-1);border-color:var(--series-1);color:var(--on-accent);font-weight:600;width:100%}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
+button[aria-pressed="true"]{border-color:var(--series-1);box-shadow:inset 0 0 0 1px var(--series-1);font-weight:600}
+.leds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.plot{position:relative}
+canvas{display:block;width:100%;height:170px;touch-action:pan-y}
+.tip{position:absolute;top:4px;pointer-events:none;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-size:12px;white-space:nowrap;display:none;font-variant-numeric:tabular-nums}
+.msg{font-size:14px;color:var(--text-secondary);margin:8px 0 0}
+details{font-size:13px;color:var(--text-secondary)}
+summary{cursor:pointer;padding:4px 0}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:4px 6px;border-bottom:1px solid var(--grid)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>FitBand</h1>
+    <span class="pill"><span class="dot" id="dot"></span><span id="link">Not connected</span></span>
+  </header>
+
+  <section class="card">
+    <button class="primary" id="connect">Connect to FitBand</button>
+    <p class="msg" id="msg">Tap Connect, then choose FitBand in the list. Bluetooth must be on.</p>
+  </section>
+
+  <section class="card">
+    <h2>Heart rate</h2>
+    <div class="hero"><b id="bpm">–</b><span>bpm</span></div>
+    <p class="sub" id="contact" style="margin:6px 0 0">Not connected</p>
+  </section>
+
+  <div class="row">
+    <section class="card"><div class="k">Battery (approx.)</div><div class="v" id="bat">–</div><div class="d">from voltage</div></section>
+    <section class="card"><div class="k">Readings this session</div><div class="v" id="cnt">0</div><div class="d" id="range">&nbsp;</div></section>
+  </div>
+
+  <section class="card">
+    <h2>Heart rate, last 10 minutes</h2>
+    <p class="sub">Gaps are times with no skin contact or no steady beat.</p>
+    <div class="plot"><canvas id="cHr" role="img" aria-label="Heart rate over the last 10 minutes"></canvas><div class="tip" id="tHr"></div></div>
+    <details><summary>Show recent readings as a table</summary>
+      <table><thead><tr><th>Seconds ago</th><th>Heart rate (bpm)</th></tr></thead><tbody id="tbl"></tbody></table>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>Band light</h2>
+    <p class="sub">Switches the small light on the band, to check the phone can control it.</p>
+    <div class="leds">
+      <button id="led0" data-led="0" disabled>Off</button>
+      <button id="led1" data-led="1" disabled>Red</button>
+      <button id="led2" data-led="2" disabled>Green</button>
+      <button id="led3" data-led="3" disabled>Blue</button>
+    </div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const LED_SVC='19b10000-e8f2-537e-4f6c-d104768a1214',LED_CHR='19b10001-e8f2-537e-4f6c-d104768a1214';
+let device=null,ledChar=null,hist=[],lastRx=0;       // hist: [timeMs, bpm|null]
+
+function say(t){$('msg').textContent=t;}
+function setLinked(on){$('dot').className='dot'+(on?' on':'');$('link').textContent=on?'Connected':'Not connected';
+  $('connect').textContent=on?'Disconnect':'Connect to FitBand';
+  for(const b of document.querySelectorAll('[data-led]'))b.disabled=!on||!ledChar;
+  if(!on){$('bpm').textContent='–';$('contact').textContent='Not connected';}}
+
+function onHr(e){const v=e.target.value,f=v.getUint8(0),bpm=(f&1)?v.getUint16(1,true):v.getUint8(1);
+  const supported=!!(f&4),contact=supported?!!(f&2):bpm>0,ok=contact&&bpm>0;lastRx=Date.now();
+  $('bpm').textContent=ok?bpm:'–';
+  $('contact').textContent=ok?'✓ Skin contact, steady beat':'○ No steady beat found. Rest a fingertip lightly on the sensor and hold still.';
+  hist.push([Date.now(),ok?bpm:null]);if(hist.length>900)hist.shift();render();}
+function onBat(e){$('bat').textContent=e.target.value.getUint8(0)+'%';}
+function showLed(n){for(const b of document.querySelectorAll('[data-led]'))b.setAttribute('aria-pressed',String(+b.dataset.led===n));}
+
+async function connect(){
+  if(!navigator.bluetooth){say('This browser cannot use Bluetooth. On iPhone open this page in the Bluefy app; on Android or a laptop use Chrome or Edge.');return;}
+  try{
+    say('Choose FitBand in the list…');
+    device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}],optionalServices:['battery_service',LED_SVC]});
+    device.addEventListener('gattserverdisconnected',()=>{ledChar=null;setLinked(false);say('Disconnected. Tap Connect to link again.');});
+    say('Connecting…');
+    const g=await device.gatt.connect();
+    const hr=await (await g.getPrimaryService('heart_rate')).getCharacteristic('heart_rate_measurement');
+    hr.addEventListener('characteristicvaluechanged',onHr);await hr.startNotifications();
+    try{const b=await (await g.getPrimaryService('battery_service')).getCharacteristic('battery_level');
+      $('bat').textContent=(await b.readValue()).getUint8(0)+'%';b.addEventListener('characteristicvaluechanged',onBat);await b.startNotifications();}catch(e){}
+    try{ledChar=await (await g.getPrimaryService(LED_SVC)).getCharacteristic(LED_CHR);showLed((await ledChar.readValue()).getUint8(0));}catch(e){ledChar=null;}
+    setLinked(true);say('Connected to '+(device.name||'the band')+'. Heart rate updates every second.');
+  }catch(e){setLinked(false);say(e&&e.name==='NotFoundError'?'No band chosen. Tap Connect to try again.':'Could not connect: '+(e&&e.message||e)+'. Close other apps linked to the band (nRF Connect) and try again.');}
+}
+$('connect').addEventListener('click',()=>{if(device&&device.gatt&&device.gatt.connected)device.gatt.disconnect();else connect();});
+for(const b of document.querySelectorAll('[data-led]'))b.addEventListener('click',async()=>{
+  if(!ledChar)return;const n=+b.dataset.led;
+  try{await ledChar.writeValue(Uint8Array.of(n));showLed(n);}catch(e){say('Could not change the light: '+(e&&e.message||e));}});
+
+function prep(c){const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  if(c.width!==Math.round(r.width*d)||c.height!==Math.round(r.height*d)){c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);}
+  const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,r.width,r.height);return[g,r.width,r.height];}
+function draw(){
+  const c=$('cHr'),tip=$('tHr'),now=Date.now(),pts=hist.filter(h=>now-h[0]<=600000).map(h=>({x:-(now-h[0])/60000,y:h[1]}));
+  const vals=pts.map(p=>p.y).filter(v=>v!=null);
+  let a=60,b=120;if(vals.length){a=Math.floor((Math.min(...vals)-8)/10)*10;b=Math.ceil((Math.max(...vals)+8)/10)*10;if(b-a<40){const m=(a+b)/2;a=Math.floor((m-20)/10)*10;b=a+40;}}
+  const step=(b-a)>80?40:(b-a)>40?20:10;
+  const [g,W,H]=prep(c),L=40,R=40,T=10,B=22,pw=W-L-R,ph=H-T-B,X=x=>L+(x+10)/10*pw,Y=y=>T+(1-(y-a)/(b-a))*ph;
+  g.font='12px system-ui,-apple-system,"Segoe UI",sans-serif';g.textBaseline='middle';g.strokeStyle=css('--grid');g.lineWidth=1;g.fillStyle=css('--text-muted');g.textAlign='right';
+  for(let t=a;t<=b;t+=step){const y=Math.round(Y(t))+.5;g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.fillText(t,L-6,y);}
+  g.textBaseline='alphabetic';g.textAlign='left';g.fillText('10 min ago',L,H-5);g.textAlign='center';g.fillText('5 min',X(-5),H-5);g.textAlign='right';g.fillText('now',L+pw,H-5);
+  if(!vals.length){g.textAlign='center';g.fillStyle=css('--text-secondary');g.fillText('No heart-rate readings yet',L+pw/2,T+ph/2);tip.style.display='none';return;}
+  g.strokeStyle=css('--series-1');g.lineWidth=2;g.lineJoin='round';g.lineCap='round';g.beginPath();let pen=false;
+  for(const p of pts){if(p.y==null){pen=false;continue;}if(pen)g.lineTo(X(p.x),Y(p.y));else g.moveTo(X(p.x),Y(p.y));pen=true;}g.stroke();
+  let lp=null;for(let i=pts.length-1;i>=0&&pts.length-i<8;i--)if(pts[i].y!=null){lp=pts[i];break;}
+  if(lp){g.beginPath();g.arc(X(lp.x),Y(lp.y),4,0,6.3);g.fillStyle=css('--series-1');g.fill();g.fillStyle=css('--text-primary');g.textAlign='left';g.textBaseline='middle';g.fillText(lp.y,X(lp.x)+8,Y(lp.y));}
+  if(c._hx!=null){let best=null,bd=1e9;for(const p of pts){if(p.y==null)continue;const d=Math.abs(X(p.x)-c._hx);if(d<bd){bd=d;best=p;}}
+    if(best&&bd<30){const x=X(best.x),y=Y(best.y);g.strokeStyle=css('--text-muted');g.lineWidth=1;g.beginPath();g.moveTo(Math.round(x)+.5,T);g.lineTo(Math.round(x)+.5,T+ph);g.stroke();
+      g.beginPath();g.arc(x,y,5,0,6.3);g.fillStyle=css('--series-1');g.fill();g.lineWidth=2;g.strokeStyle=css('--surface-1');g.stroke();
+      tip.textContent=best.y+' bpm · '+(best.x>-1?Math.round(-best.x*60)+' s ago':(-best.x).toFixed(1)+' min ago');tip.style.display='block';
+      const tw=tip.offsetWidth;tip.style.left=Math.max(0,Math.min(W-tw,x-tw/2))+'px';}else tip.style.display='none';}
+  else tip.style.display='none';
+}
+function render(){
+  const vals=hist.map(h=>h[1]).filter(v=>v!=null),now=Date.now();
+  $('cnt').textContent=vals.length;$('range').textContent=vals.length?Math.min(...vals)+'–'+Math.max(...vals)+' bpm':' ';
+  $('tbl').innerHTML=hist.slice(-12).reverse().map(h=>'<tr><td>'+Math.round((now-h[0])/1000)+'</td><td>'+(h[1]==null?'no reading':h[1])+'</td></tr>').join('')||'<tr><td colspan="2">No readings yet</td></tr>';
+  draw();
+}
+const c=$('cHr');c._hx=null;
+const mv=e=>{c._hx=e.clientX-c.getBoundingClientRect().left;draw();};
+c.addEventListener('pointermove',mv);c.addEventListener('pointerdown',mv);c.addEventListener('pointerleave',()=>{c._hx=null;draw();});
+window.addEventListener('resize',draw);setInterval(draw,2000);render();
+if(!navigator.bluetooth)say('This browser cannot use Bluetooth. On iPhone open this page in the Bluefy app; on Android or a laptop use Chrome or Edge.');
+</script>
+</body>
+</html>
