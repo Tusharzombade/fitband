@@ -21,6 +21,7 @@ h2{font-size:14px;margin:0 0 2px;font-weight:600}
 .hero{display:flex;align-items:baseline;gap:8px}
 .hero b{font-size:64px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-1px}
 .hero span{font-size:18px;color:var(--text-secondary)}
+.hero b.empty{font-weight:300;color:var(--text-muted)}
 .row{display:flex;gap:12px}
 .row .card{flex:1;min-width:0}
 .k{font-size:12px;color:var(--text-secondary)}
@@ -58,7 +59,7 @@ th{font-weight:600;color:var(--text-secondary)}
 
   <section class="card">
     <h2>Heart rate</h2>
-    <div class="hero"><b id="bpm">–</b><span>bpm</span></div>
+    <div class="hero"><b id="bpm" class="empty">–</b><span>bpm</span></div>
     <p class="sub" id="contact" style="margin:6px 0 0">Not connected</p>
   </section>
 
@@ -97,11 +98,11 @@ function say(t){$('msg').textContent=t;}
 function setLinked(on){$('dot').className='dot'+(on?' on':'');$('link').textContent=on?'Connected':'Not connected';
   $('connect').textContent=on?'Disconnect':'Connect to FitBand';
   for(const b of document.querySelectorAll('[data-led]'))b.disabled=!on||!ledChar;
-  if(!on){$('bpm').textContent='–';$('contact').textContent='Not connected';}}
+  if(!on){$('bpm').textContent='–';$('bpm').className='empty';$('contact').textContent='Not connected';}}
 
 function onHr(e){const v=e.target.value,f=v.getUint8(0),bpm=(f&1)?v.getUint16(1,true):v.getUint8(1);
   const supported=!!(f&4),contact=supported?!!(f&2):bpm>0,ok=contact&&bpm>0;lastRx=Date.now();
-  $('bpm').textContent=ok?bpm:'–';
+  $('bpm').textContent=ok?bpm:'–';$('bpm').className=ok?'':'empty';
   $('contact').textContent=ok?'✓ Skin contact, steady beat':'○ No steady beat found. Rest a fingertip lightly on the sensor and hold still.';
   hist.push([Date.now(),ok?bpm:null]);if(hist.length>900)hist.shift();render();}
 function onBat(e){$('bat').textContent=e.target.value.getUint8(0)+'%';}
