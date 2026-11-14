@@ -2,168 +2,452 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FitBand Phone</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F4F3F0">
+<title>FitBand</title>
 <style>
-:root{color-scheme:light;--page:#f4f3f0;--surface-1:#fcfcfb;--border:#e3e1db;--text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#85837d;--grid:#e9e7e1;--series-1:#2a78d6;--on-accent:#ffffff}
-@media (prefers-color-scheme:dark){:root{color-scheme:dark;--page:#111110;--surface-1:#1a1a19;--border:#2e2e2c;--text-primary:#f0efec;--text-secondary:#c3c2b7;--text-muted:#8d8c85;--grid:#2a2a28;--series-1:#3987e5;--on-accent:#ffffff}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--page);color:var(--text-primary);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
-main{max-width:560px;margin:0 auto;padding:16px 16px 40px}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-h1{font-size:20px;margin:0;font-weight:650}
-h2{font-size:14px;margin:0 0 2px;font-weight:600}
-.sub{color:var(--text-secondary);font-size:13px;margin:0 0 8px}
-.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface-1);border-radius:999px;padding:4px 10px;font-size:13px;color:var(--text-secondary);white-space:nowrap}
-.dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--text-muted)}
-.dot.on{background:var(--series-1);border-color:var(--series-1)}
-.card{background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
-.hero{display:flex;align-items:baseline;gap:8px}
-.hero b{font-size:64px;line-height:1;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-1px}
-.hero span{font-size:18px;color:var(--text-secondary)}
-.hero b.empty{font-weight:300;color:var(--text-muted)}
-.row{display:flex;gap:12px}
-.row .card{flex:1;min-width:0}
-.k{font-size:12px;color:var(--text-secondary)}
-.v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
-.d{font-size:12px;color:var(--text-muted)}
-button{font:inherit;border-radius:10px;border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);padding:10px 14px;min-height:44px;cursor:pointer}
-button.primary{background:var(--series-1);border-color:var(--series-1);color:var(--on-accent);font-weight:600;width:100%}
-button:disabled{opacity:.45;cursor:default}
-button:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
-button[aria-pressed="true"]{border-color:var(--series-1);box-shadow:inset 0 0 0 1px var(--series-1);font-weight:600}
-.leds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.plot{position:relative}
-canvas{display:block;width:100%;height:170px;touch-action:pan-y}
-.tip{position:absolute;top:4px;pointer-events:none;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-size:12px;white-space:nowrap;display:none;font-variant-numeric:tabular-nums}
-.msg{font-size:14px;color:var(--text-secondary);margin:8px 0 0}
-details{font-size:13px;color:var(--text-secondary)}
-summary{cursor:pointer;padding:4px 0}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
-th,td{text-align:right;padding:4px 6px;border-bottom:1px solid var(--grid)}
-th:first-child,td:first-child{text-align:left}
-th{font-weight:600;color:var(--text-secondary)}
+:root{color-scheme:light}
+html,body{margin:0;background:#F4F3F0}
+body{-webkit-text-size-adjust:100%}
+#app{max-width:430px;margin:0 auto;min-height:100vh;box-sizing:border-box;padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(28px + env(safe-area-inset-bottom,0px));background:#F4F3F0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#141414;display:flex;flex-direction:column;gap:14px}
+a{color:#1F5FB3}a:hover{color:#174A8C}
+svg{max-width:100%;height:auto}
+button{cursor:pointer}button:disabled{opacity:.45;cursor:default}
+button:focus-visible,a:focus-visible{outline:2px solid #2E78D2;outline-offset:2px}
+section[hidden],[hidden]{display:none!important}
+body.nosample .sample{display:none!important}
+body:not(.nosample) .onlylive{display:none!important}
 </style>
 </head>
 <body>
-<main>
-  <header>
-    <h1>FitBand</h1>
-    <span class="pill"><span class="dot" id="dot"></span><span id="link">Not connected</span></span>
-  </header>
-
-  <section class="card">
-    <button class="primary" id="connect">Connect to FitBand</button>
-    <p class="msg" id="msg">Tap Connect, then choose FitBand in the list. Bluetooth must be on.</p>
-  </section>
-
-  <section class="card">
-    <h2>Heart rate</h2>
-    <div class="hero"><b id="bpm" class="empty">–</b><span>bpm</span></div>
-    <p class="sub" id="contact" style="margin:6px 0 0">Not connected</p>
-  </section>
-
-  <div class="row">
-    <section class="card"><div class="k">Battery (approx.)</div><div class="v" id="bat">–</div><div class="d">from voltage</div></section>
-    <section class="card"><div class="k">Readings this session</div><div class="v" id="cnt">0</div><div class="d" id="range">&nbsp;</div></section>
-  </div>
-
-  <section class="card">
-    <h2>Heart rate, last 10 minutes</h2>
-    <p class="sub">Gaps are times with no skin contact or no steady beat.</p>
-    <div class="plot"><canvas id="cHr" role="img" aria-label="Heart rate over the last 10 minutes"></canvas><div class="tip" id="tHr"></div></div>
-    <details><summary>Show recent readings as a table</summary>
-      <table><thead><tr><th>Seconds ago</th><th>Heart rate (bpm)</th></tr></thead><tbody id="tbl"></tbody></table>
-    </details>
-  </section>
-
-  <section class="card">
-    <h2>Band light</h2>
-    <p class="sub">Switches the small light on the band, to check the phone can control it.</p>
-    <div class="leds">
-      <button id="led0" data-led="0" disabled>Off</button>
-      <button id="led1" data-led="1" disabled>Red</button>
-      <button id="led2" data-led="2" disabled>Green</button>
-      <button id="led3" data-led="3" disabled>Blue</button>
+<div id="app">
+  <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 2px 0">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <h1 style="margin: 0; font-size: 30px; font-weight: 800; letter-spacing: -0.5px">FitBand</h1>
+      <button type="button" id="connect"></button>
     </div>
-  </section>
-</main>
+    <span id="status" style="font-size: 14px; color: #5A5A5A">Not connected</span>
+    <div style="height: 4px"></div>
+  </div>
+  <nav id="tabs" aria-label="Sections" style="display: flex; gap: 6px">
+    <a href="#plan" data-tab="plan">Plan</a><a href="#activity" data-tab="activity">Activity</a><a href="#heart" data-tab="heart">Heart</a><a href="#device" data-tab="device">Device</a>
+  </nav>
+<section id="view-plan" style="display: flex; flex-direction: column; gap: 14px"><div class="sample" style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; gap: 6px"><span style="font-size: 15px; font-weight: 700">Preview of the planned app</span><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Cards marked “Sample data” show example numbers, not readings from your band. Live today: heart rate, battery and band light (Heart and Device tabs).</span></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Daily readiness</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+    <div style="display: flex; align-items: center; gap: 18px">
+      <svg width="100" height="100" viewBox="0 0 104 104" role="img" aria-label="Readiness 78 out of 100">
+        <circle cx="52" cy="52" r="44" fill="none" stroke="#E4E1DA" stroke-width="10"/>
+        <circle cx="52" cy="52" r="44" fill="none" stroke="#1E8A5A" stroke-width="10" stroke-linecap="round" stroke-dasharray="216 276" transform="rotate(-90 52 52)"/>
+        <text x="52" y="60" text-anchor="middle" font-size="30" font-weight="800" fill="#141414" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">78</text>
+      </svg>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 22px; font-weight: 800">Recovered well</span>
+        <span style="font-size: 15px; color: #3A3A3A; line-height: 1.4">A brisk walk or your normal workout suits today.</span>
+      </div>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; padding-top: 2px">What shaped today’s score</span>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #F4F3F0; border-radius: 12px">
+      <span style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #1E8A5A"></span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Sleep · 7 h 05</span><span style="font-size: 13px; color: #5A5A5A">25 min more than your usual</span></div>
+      <span style="font-size: 13px; font-weight: 700; color: #1E8A5A">Good</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #F4F3F0; border-radius: 12px">
+      <span style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #1E8A5A"></span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">HRV · 48 ms</span><span style="font-size: 13px; color: #5A5A5A">Above your 30-day range</span></div>
+      <span style="font-size: 13px; font-weight: 700; color: #1E8A5A">Good</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #F4F3F0; border-radius: 12px">
+      <span style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #5A5A5A"></span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Resting heart rate · 61 bpm</span><span style="font-size: 13px; color: #5A5A5A">Normal for you</span></div>
+      <span style="font-size: 13px; font-weight: 700; color: #5A5A5A">Steady</span>
+    </div>
+    <span style="font-size: 14px; font-weight: 700; padding-top: 4px">Recovery this week</span>
+    <svg width="350" height="130" viewBox="0 0 350 130" role="img" aria-label="Readiness over the last 7 days: 62, 70, 74, 58, 66, 71 and 78 today" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="11.0" y="49.0" width="28.0" height="57.0" rx="5" fill="#CFCBC3"/><text x="25.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Fri</text><rect x="61.0" y="41.6" width="28.0" height="64.4" rx="5" fill="#CFCBC3"/><text x="75.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Sat</text><rect x="111.0" y="37.9" width="28.0" height="68.1" rx="5" fill="#CFCBC3"/><text x="125.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Sun</text><rect x="161.0" y="52.6" width="28.0" height="53.4" rx="5" fill="#CFCBC3"/><text x="175.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Mon</text><rect x="211.0" y="45.3" width="28.0" height="60.7" rx="5" fill="#CFCBC3"/><text x="225.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Tue</text><rect x="261.0" y="40.7" width="28.0" height="65.3" rx="5" fill="#CFCBC3"/><text x="275.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Wed</text><rect x="311.0" y="34.2" width="28.0" height="71.8" rx="5" fill="#1E8A5A"/><text x="325.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Thu</text></svg>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Today’s walking target</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #F1EEF8; color: #4A3A78; border: 1px solid #D6CDEB">Suggestion</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">5,000 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">of 8,000 steps</span></span>
+    <div style="height: 10px; border-radius: 999px; background: #E4E1DA"><div style="width: 62%; height: 10px; border-radius: 999px; background: #2E78D2"></div></div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 14px; background: #EEF4FC; border-radius: 14px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1D3F6E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="13" cy="4" r="1.8"/><path d="m9 21 2-6 3 2v4"/><path d="M7 12l3-4 4 1 2 3h3"/></svg>
+      <span style="font-size: 16px; color: #1D3F6E; line-height: 1.4"><b>3,000 steps remaining.</b> Consider a 25–30 minute walk to reach your goal.</span>
+    </div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Set from your last 14 days (average 7,100 steps) and good recovery today. Updates live as you walk.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 4px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Today’s plan</span><span style="font-size: 14px; color: #5A5A5A">4 of 6 left</span></div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: transparent">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: none; width: 58px; font-size: 14px; color: #5A5A5A; padding-top: 2px">7:00 am</span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; color: #141414">Morning walk</span><span style="font-size: 13px; color: #5A5A5A; line-height: 1.4">20 min · done, 2,300 steps</span></div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: transparent">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: none; width: 58px; font-size: 14px; color: #5A5A5A; padding-top: 2px">9:00 am</span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; color: #141414">Water</span><span style="font-size: 13px; color: #5A5A5A; line-height: 1.4">2 glasses · done</span></div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: #EEF4FC">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #2E78D2; box-sizing: border-box"></span>
+      <span style="flex: none; width: 58px; font-size: 14px; color: #5A5A5A; padding-top: 2px">Now</span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; color: #141414">Activity break</span><span style="font-size: 13px; color: #5A5A5A; line-height: 1.4">You’ve been still for 1 h 40. Walk for 5 minutes.</span></div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: transparent">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #CFCBC3; box-sizing: border-box"></span>
+      <span style="flex: none; width: 58px; font-size: 14px; color: #5A5A5A; padding-top: 2px">1:30 pm</span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; color: #3A3A3A">Lunch walk</span><span style="font-size: 13px; color: #5A5A5A; line-height: 1.4">15 min · about 1,600 steps</span></div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: transparent">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #CFCBC3; box-sizing: border-box"></span>
+      <span style="flex: none; width: 58px; font-size: 14px; color: #5A5A5A; padding-top: 2px">6:30 pm</span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; color: #3A3A3A">Evening walk</span><span style="font-size: 13px; color: #5A5A5A; line-height: 1.4">25 min · finishes your target</span></div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px; border-radius: 12px; background: transparent">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; border: 2px solid #CFCBC3; box-sizing: border-box"></span>
+      <span style="flex: none; width: 58px; font-size: 14px; color: #5A5A5A; padding-top: 2px">10:45 pm</span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700; color: #3A3A3A">Wind down</span><span style="font-size: 13px; color: #5A5A5A; line-height: 1.4">For an 11:15 pm bedtime, your usual</span></div>
+    </div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Hydration</span><span style="font-size: 14px; color: #5A5A5A">Saved on this phone</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1"><span id="h2oN">0</span> <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">of 8 glasses</span></span>
+    <div id="h2oRow" style="display: flex; gap: 8px; flex-wrap: wrap" role="img" aria-label="0 of 8 glasses logged"></div>
+    <button type="button" id="h2oAdd" style="height: 46px; border: 1px solid #CFCBC3; border-radius: 14px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit">+ Log a glass</button><button type="button" id="h2oUndo" style="height: 44px; border: none; background: transparent; color: #1F5FB3; font-size: 15px; font-weight: 600; font-family: inherit">Remove last glass</button>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">You log water; the band can’t measure it.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Meal ideas</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #F1EEF8; color: #4A3A78; border: 1px solid #D6CDEB">Suggestion</span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Lunch</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">Dal, brown rice, cucumber salad</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Snack</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">Roasted chana or a fruit</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Dinner</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">Paneer bhurji with 2 rotis</span></span></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">From your preferences (vegetarian, home-style food) and this morning’s run. General ideas only, not medical or dietary advice.</span>
+    <a href="#device" style="font-size: 15px; font-weight: 600">Change food preferences</a>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Insights from your trends</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: #F4F3F0; border-radius: 12px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A3A78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+      <span style="font-size: 15px; line-height: 1.45">Your resting heart rate is 3 bpm lower than your 30-day average, a common sign of improving fitness.</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: #F4F3F0; border-radius: 12px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A3A78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+      <span style="font-size: 15px; line-height: 1.45">On days with a lunch walk you average 1,800 more steps.</span>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: #F4F3F0; border-radius: 12px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A3A78" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></svg>
+      <span style="font-size: 15px; line-height: 1.45">You sleep about 35 min less on Sundays. An earlier bedtime could lift Monday’s readiness.</span>
+    </div>
+  </div><a href="#summary" style="height: 52px; border-radius: 16px; background: #141414; color: #FFFFFF; font-size: 17px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center" class="sample">See end-of-day summary</a></section>
+<section id="view-activity" hidden style="display: flex; flex-direction: column; gap: 14px"><div class="sample" style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; gap: 6px"><span style="font-size: 15px; font-weight: 700">Preview of the planned app</span><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Cards marked “Sample data” show example numbers, not readings from your band. Live today: heart rate, battery and band light (Heart and Device tabs).</span></div><div class="onlylive" style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px"><span style="font-size: 17px; font-weight: 700">Nothing live here yet</span><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Steps, distance, calories and workouts need the step counter in the next band firmware.</span></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 17px; font-weight: 700">Steps</span><span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #FCF4EC; color: #8A4510"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B85C14" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1 1.5 2 1.5 3 1-2 1.5-5 1.5-8z"/></svg>5-day goal streak</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">6,240 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">of 8,000</span></span>
+    <div style="height: 10px; border-radius: 999px; background: #E4E1DA"><div style="width: 78%; height: 10px; border-radius: 999px; background: #2E78D2"></div></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #5A5A5A">Remaining</span><span style="font-size: 20px; font-weight: 700">1,760 steps</span><span style="font-size: 13px; color: #5A5A5A">about 15 min of walking</span></div><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 13px; color: #5A5A5A">Distance</span><span style="font-size: 20px; font-weight: 700">4.4 km</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Steps this week</span><span style="font-size: 14px; color: #5A5A5A">avg 7,100</span></div>
+    <svg width="350" height="130" viewBox="0 0 350 130" role="img" aria-label="Steps over the last 7 days: 7,900; 9,200; 5,400; 8,300; 8,100; 8,600; and 6,240 so far today. Goal 8,000." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="11.0" y="33.3" width="28.0" height="72.7" rx="5" fill="#CFCBC3"/><text x="25.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Fri</text><rect x="61.0" y="21.4" width="28.0" height="84.6" rx="5" fill="#9CC0EC"/><text x="75.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Sat</text><rect x="111.0" y="56.3" width="28.0" height="49.7" rx="5" fill="#CFCBC3"/><text x="125.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Sun</text><rect x="161.0" y="29.6" width="28.0" height="76.4" rx="5" fill="#9CC0EC"/><text x="175.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Mon</text><rect x="211.0" y="31.5" width="28.0" height="74.5" rx="5" fill="#9CC0EC"/><text x="225.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Tue</text><rect x="261.0" y="26.9" width="28.0" height="79.1" rx="5" fill="#9CC0EC"/><text x="275.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Wed</text><rect x="311.0" y="48.6" width="28.0" height="57.4" rx="5" fill="#2E78D2"/><text x="325.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Thu</text><line x1="0" y1="32.4" x2="350" y2="32.4" stroke="#141414" stroke-width="1.2" stroke-dasharray="4 4"/><text x="350" y="28.4" text-anchor="end" font-size="11" fill="#141414">goal</text></svg>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Light blue = goal reached. Today is still in progress.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Hourly activity</span><span style="font-size: 14px; color: #5A5A5A">Today</span></div>
+    <svg width="350" height="120" viewBox="0 0 350 120" role="img" aria-label="Steps per hour today. Busiest 7 to 8 am with about 2,300 steps and 1 to 2 pm with about 1,100. Quiet from 9 am to noon." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="89.7" y="96.5" width="10.2" height="2.0" rx="2" fill="#CFCBC3"/><rect x="104.3" y="13.7" width="10.2" height="84.3" rx="2" fill="#2E78D2"/><rect x="118.9" y="82.6" width="10.2" height="15.4" rx="2" fill="#9CC0EC"/><rect x="133.4" y="91.4" width="10.2" height="6.6" rx="2" fill="#CFCBC3"/><rect x="148.0" y="94.7" width="10.2" height="3.3" rx="2" fill="#CFCBC3"/><rect x="162.6" y="95.8" width="10.2" height="2.2" rx="2" fill="#CFCBC3"/><rect x="177.2" y="92.9" width="10.2" height="5.1" rx="2" fill="#CFCBC3"/><rect x="191.8" y="57.7" width="10.2" height="40.3" rx="2" fill="#2E78D2"/><rect x="206.4" y="88.5" width="10.2" height="9.5" rx="2" fill="#9CC0EC"/><rect x="220.9" y="93.6" width="10.2" height="4.4" rx="2" fill="#CFCBC3"/><rect x="235.5" y="86.6" width="10.2" height="11.4" rx="2" fill="#9CC0EC"/><rect x="250.1" y="89.9" width="10.2" height="8.1" rx="2" fill="#CFCBC3"/><rect x="264.7" y="78.9" width="10.2" height="19.1" rx="2" fill="#9CC0EC"/><text x="7.3" y="115" text-anchor="middle" font-size="11" fill="#5A5A5A">12a</text><text x="94.8" y="115" text-anchor="middle" font-size="11" fill="#5A5A5A">6a</text><text x="182.3" y="115" text-anchor="middle" font-size="11" fill="#5A5A5A">12p</text><text x="269.8" y="115" text-anchor="middle" font-size="11" fill="#5A5A5A">6p</text><text x="342.7" y="115" text-anchor="middle" font-size="11" fill="#5A5A5A">11p</text></svg>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Most active hour</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">7–8 am</span><span style="font-size: 13px; color: #5A5A5A">2,300 steps</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Hours with 250+ steps</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">7 of 12 awake hours</span></span></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Calories</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">1,980 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">kcal total</span></span>
+    <div style="display: flex; height: 14px; border-radius: 999px; overflow: hidden" role="img" aria-label="1,460 resting calories and 520 active calories"><div style="width: 74%; background: #CFCBC3"></div><div style="width: 26%; background: #B85C14"></div></div>
+    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 15px"><div style="display: flex; align-items: center; gap: 10px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #CFCBC3"></span><span style="flex: 1">Resting (your body at rest)</span><b>1,460</b></div><div style="display: flex; align-items: center; gap: 10px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #B85C14"></span><span style="flex: 1">Active (movement and exercise)</span><b>520</b></div></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Resting comes from your age, height and weight; active from steps and heart rate.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Intensity and sitting</span><span style="font-size: 14px; color: #5A5A5A">9 am – 9 pm</span></div>
+    <div style="display: flex; height: 26px; border-radius: 8px; overflow: hidden" role="img" aria-label="Timeline from 9 am to 9 pm. Longest sitting stretch 10:05 am to 12:20 pm. Active walks at 1 pm and 6:30 pm."><div style="width: 9.17%; background: #CFCBC3"></div><div style="width: 18.58%; background: #8A8780"></div><div style="width: 5.58%; background: #CFCBC3"></div><div style="width: 8.33%; background: #2E78D2"></div><div style="width: 20.83%; background: #CFCBC3"></div><div style="width: 4.17%; background: #9CC0EC"></div><div style="width: 12.50%; background: #CFCBC3"></div><div style="width: 4.17%; background: #2E78D2"></div><div style="width: 16.67%; background: #9CC0EC"></div></div>
+    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #5A5A5A"><span>9a</span><span>12p</span><span>3p</span><span>6p</span><span>9p</span></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; font-size: 14px"><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #CFCBC3"></span>Sitting</div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #8A8780"></span>Long sitting (1 h+)</div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #9CC0EC"></span>Light activity</div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2E78D2"></span>Moderate or more</div></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Sitting today</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">7 h 50</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Longest without moving</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">2 h 15</span><span style="font-size: 13px; color: #5A5A5A">10:05 am – 12:20 pm</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Light / moderate / vigorous</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">2 h 10 / 34 min / 6 min</span></span></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Walking and running</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px"><div style="background: #F4F3F0; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13px; color: #5A5A5A">Walking</span><span style="font-size: 22px; font-weight: 800">58 min</span><span style="font-size: 14px; font-weight: 700">11:40 min/km</span><span style="font-size: 13px; color: #5A5A5A">~105 steps/min</span></div><div style="background: #F4F3F0; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 13px; color: #5A5A5A">Running</span><span style="font-size: 22px; font-weight: 800">12 min</span><span style="font-size: 14px; font-weight: 700">6:10 min/km</span><span style="font-size: 13px; color: #5A5A5A">~160 steps/min</span></div></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Walking vs running comes from step rhythm and arm motion; pace from steps × your stride.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Workout history</span><span style="font-size: 14px; color: #5A5A5A">This week</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Run · 28 min</span><span style="font-size: 13px; color: #5A5A5A">Today, 6:42 am</span><span style="font-size: 12px; color: #5A5A5A">Auto-detected</span></div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: #5A5A5A"><span>avg <b style="color: #141414">148</b> bpm</span><span>max <b style="color: #141414">167</b> bpm</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Brisk walk · 34 min</span><span style="font-size: 13px; color: #5A5A5A">Wed, 7:05 pm</span><span style="font-size: 12px; color: #5A5A5A">Auto-detected</span></div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: #5A5A5A"><span>avg <b style="color: #141414">118</b> bpm</span><span>max <b style="color: #141414">131</b> bpm</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Run · 31 min</span><span style="font-size: 13px; color: #5A5A5A">Mon, 6:50 am</span><span style="font-size: 12px; color: #5A5A5A">Auto-detected</span></div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: #5A5A5A"><span>avg <b style="color: #141414">151</b> bpm</span><span>max <b style="color: #141414">172</b> bpm</span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 700">Brisk walk · 45 min</span><span style="font-size: 13px; color: #5A5A5A">Sat, 9:10 am</span><span style="font-size: 12px; color: #5A5A5A">Auto-detected</span></div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 13px; color: #5A5A5A"><span>avg <b style="color: #141414">114</b> bpm</span><span>max <b style="color: #141414">129</b> bpm</span></div>
+    </div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">A workout is logged automatically when heart rate and movement stay raised for 10+ minutes.</span>
+  </div></section>
+<section id="view-heart" hidden style="display: flex; flex-direction: column; gap: 14px"><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px">
+    <span style="font-size: 15px; font-weight: 700">How to read these numbers</span>
+    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: #3A3A3A"><div style="display: flex; gap: 10px; align-items: center"><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F2EC; color: #1E5A3E; border: 1px solid #BFDCCB">Measured</span><span>straight from the band’s sensors</span></div><div style="display: flex; gap: 10px; align-items: center"><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span><span>calculated by the app from those readings</span></div><div style="display: flex; gap: 10px; align-items: center"><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #FCF4EC; color: #8A4510; border: 1px solid #EBC9A8">Experimental</span><span>still being tested, trends only</span></div></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Heart rate today</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F2EC; color: #1E5A3E; border: 1px solid #BFDCCB">Measured</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1"><span id="hrNow">–</span> <span id="hrUnit" style="font-size: 17px; font-weight: 600; color: #5A5A5A">bpm</span></span>
+    <svg id="hrSvg" width="350" height="110" viewBox="0 0 350 110" role="img" aria-label="Heart rate readings today" style="touch-action: pan-y"><line x1="0" y1="100" x2="350" y2="100" stroke="#E4E1DA"/><line x1="0" y1="55" x2="350" y2="55" stroke="#EFEDE8"/><line x1="0" y1="10" x2="350" y2="10" stroke="#EFEDE8"/><text id="hrYhi" x="350" y="22" text-anchor="end" font-size="11" fill="#5A5A5A" font-family="-apple-system, BlinkMacSystemFont, sans-serif"></text><text id="hrYlo" x="350" y="96" text-anchor="end" font-size="11" fill="#5A5A5A" font-family="-apple-system, BlinkMacSystemFont, sans-serif"></text><path id="hrPath" d="" fill="none" stroke="#C2410C" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/><line id="hrCross" x1="0" y1="10" x2="0" y2="100" stroke="#8A8780" stroke-width="1" visibility="hidden"/><circle id="hrDot" r="5" fill="#C2410C" stroke="#FCFCFB" stroke-width="2" visibility="hidden"/><text id="hrEmpty" x="175" y="60" text-anchor="middle" font-size="14" fill="#5A5A5A" font-family="-apple-system, BlinkMacSystemFont, sans-serif">No readings yet today</text></svg><div style="display: flex; justify-content: space-between; font-size: 13px; color: #5A5A5A; margin-top: -6px"><span id="hrT0"></span><span id="hrTip"></span><span id="hrT1"></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Lowest / highest</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span id="hrRange" style="font-weight: 700">–</span></span></div>
+  <span id="hrContact" style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Connect the band to see live readings.</span></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Resting heart rate</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F2EC; color: #1E5A3E; border: 1px solid #BFDCCB">Measured</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">61 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">bpm</span></span>
+    <svg width="350" height="110" viewBox="0 0 350 110" role="img" aria-label="Resting heart rate over 7 days: 64, 63, 63, 62, 62, 62, 61. Drifting down." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="0" y="32.8" width="350" height="30.4" fill="#EFEDE8"/><text x="4" y="44.8" font-size="11" fill="#5A5A5A">your usual range</text><polyline fill="none" stroke="#C2410C" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="6.0,40.4 58.3,48.0 116.7,48.0 175.0,55.6 233.3,55.6 291.7,55.6 344.0,63.2"/><circle cx="6.0" cy="40.4" r="3" fill="#C2410C"/><text x="6.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Fri</text><circle cx="58.3" cy="48.0" r="3" fill="#C2410C"/><text x="58.3" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Sat</text><circle cx="116.7" cy="48.0" r="3" fill="#C2410C"/><text x="116.7" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Sun</text><circle cx="175.0" cy="55.6" r="3" fill="#C2410C"/><text x="175.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Mon</text><circle cx="233.3" cy="55.6" r="3" fill="#C2410C"/><text x="233.3" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Tue</text><circle cx="291.7" cy="55.6" r="3" fill="#C2410C"/><text x="291.7" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Wed</text><circle cx="344.0" cy="63.2" r="4.5" fill="#C2410C"/><text x="344.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Thu</text></svg>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Down 3 bpm over the week. A falling resting rate usually means good recovery and fitness.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Heart rate variability</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">48 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">ms overnight</span></span>
+    <svg width="350" height="110" viewBox="0 0 350 110" role="img" aria-label="Overnight HRV over 7 days: 41, 44, 39, 45, 43, 46, 48 ms." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="0" y="31.1" width="350" height="29.6" fill="#EFEDE8"/><text x="4" y="43.1" font-size="11" fill="#5A5A5A">your usual range</text><polyline fill="none" stroke="#2E78D2" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="6.0,56.4 58.3,43.8 116.7,64.9 175.0,39.6 233.3,48.0 291.7,35.3 344.0,26.9"/><circle cx="6.0" cy="56.4" r="3" fill="#2E78D2"/><text x="6.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Fri</text><circle cx="58.3" cy="43.8" r="3" fill="#2E78D2"/><text x="58.3" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Sat</text><circle cx="116.7" cy="64.9" r="3" fill="#2E78D2"/><text x="116.7" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Sun</text><circle cx="175.0" cy="39.6" r="3" fill="#2E78D2"/><text x="175.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Mon</text><circle cx="233.3" cy="48.0" r="3" fill="#2E78D2"/><text x="233.3" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Tue</text><circle cx="291.7" cy="35.3" r="3" fill="#2E78D2"/><text x="291.7" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Wed</text><circle cx="344.0" cy="26.9" r="4.5" fill="#2E78D2"/><text x="344.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Thu</text></svg>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Higher than your usual range tonight. Compare with your own trend, not with other people.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Last night’s sleep</span><span style="font-size: 14px; color: #5A5A5A">11:48 pm – 6:53 am</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">7 h 05</span>
+    <div style="display: flex; height: 30px; border-radius: 8px; overflow: hidden" role="img" aria-label="Sleep stages through the night">
+      <div style="width: 6%; background: #E8A35C"></div><div style="width: 22%; background: #9CC0EC"></div><div style="width: 14%; background: #123E75"></div><div style="width: 18%; background: #9CC0EC"></div><div style="width: 3%; background: #E8A35C"></div><div style="width: 12%; background: #2E78D2"></div><div style="width: 13%; background: #9CC0EC"></div><div style="width: 12%; background: #2E78D2"></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; font-size: 14px"><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #E8A35C"></span><span style="flex: 1">Awake</span><b>22 min</b></div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #9CC0EC"></span><span style="flex: 1">Light</span><b>3 h 50</b></div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #123E75"></span><span style="flex: 1">Deep</span><b>1 h 00</b></div><div style="display: flex; align-items: center; gap: 8px"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2E78D2"></span><span style="flex: 1">REM</span><b>1 h 35</b></div></div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap"><span style="font-size: 13px; color: #3A3A3A">Bed and wake times</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F2EC; color: #1E5A3E; border: 1px solid #BFDCCB">Measured</span><span style="font-size: 13px; color: #3A3A3A">Stages</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Sleep this week</span><span style="font-size: 14px; color: #5A5A5A">avg 6 h 48</span></div>
+    <svg width="350" height="130" viewBox="0 0 350 130" role="img" aria-label="Sleep over 7 nights: 6 h 36, 7 h 24, 6 h 06, 6 h 54, 6 h 30, 7 h 06 and 7 h 05 last night. Target 7 hours." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="11.0" y="38.5" width="28.0" height="67.5" rx="5" fill="#CFCBC3"/><text x="25.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Fri</text><rect x="61.0" y="30.4" width="28.0" height="75.6" rx="5" fill="#9CC0EC"/><text x="75.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Sat</text><rect x="111.0" y="43.6" width="28.0" height="62.4" rx="5" fill="#CFCBC3"/><text x="125.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Sun</text><rect x="161.0" y="35.5" width="28.0" height="70.5" rx="5" fill="#CFCBC3"/><text x="175.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Mon</text><rect x="211.0" y="39.6" width="28.0" height="66.4" rx="5" fill="#CFCBC3"/><text x="225.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Tue</text><rect x="261.0" y="33.4" width="28.0" height="72.6" rx="5" fill="#9CC0EC"/><text x="275.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Wed</text><rect x="311.0" y="33.6" width="28.0" height="72.4" rx="5" fill="#2E78D2"/><text x="325.0" y="124" text-anchor="middle" font-size="12" fill="#5A5A5A">Thu</text><line x1="0" y1="34.4" x2="350" y2="34.4" stroke="#141414" stroke-width="1.2" stroke-dasharray="4 4"/><text x="350" y="30.4" text-anchor="end" font-size="11" fill="#141414">goal</text></svg>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Sleep consistency</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #E6F2EC; color: #1E5A3E; border: 1px solid #BFDCCB">Measured</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">Fair</span>
+    <svg width="350" height="190" viewBox="0 0 350 190" role="img" aria-label="Bedtime and wake time for 7 nights. Bedtimes from 11:36 pm to 12:54 am, wake times from 6:30 to 8:00 am." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><text x="0" y="23" font-size="12" fill="#5A5A5A">Fri</text><rect x="94.0" y="12" width="208.6" height="14" rx="7" fill="#9CC0EC"/><text x="0" y="46" font-size="12" fill="#5A5A5A">Sat</text><rect x="116.2" y="35" width="233.8" height="14" rx="7" fill="#9CC0EC"/><text x="0" y="69" font-size="12" fill="#5A5A5A">Sun</text><rect x="125.6" y="58" width="192.8" height="14" rx="7" fill="#9CC0EC"/><text x="0" y="92" font-size="12" fill="#5A5A5A">Mon</text><rect x="84.6" y="81" width="218.0" height="14" rx="7" fill="#9CC0EC"/><text x="0" y="115" font-size="12" fill="#5A5A5A">Tue</text><rect x="103.5" y="104" width="205.4" height="14" rx="7" fill="#9CC0EC"/><text x="0" y="138" font-size="12" fill="#5A5A5A">Wed</text><rect x="87.7" y="127" width="224.4" height="14" rx="7" fill="#9CC0EC"/><text x="0" y="161" font-size="12" fill="#5A5A5A">Thu</text><rect x="90.9" y="150" width="224.4" height="14" rx="7" fill="#2E78D2"/><text x="34.0" y="186" text-anchor="middle" font-size="11" fill="#5A5A5A">10p</text><text x="97.2" y="186" text-anchor="middle" font-size="11" fill="#5A5A5A">12a</text><text x="160.4" y="186" text-anchor="middle" font-size="11" fill="#5A5A5A">2a</text><text x="223.6" y="186" text-anchor="middle" font-size="11" fill="#5A5A5A">4a</text><text x="286.8" y="186" text-anchor="middle" font-size="11" fill="#5A5A5A">6a</text><text x="350.0" y="186" text-anchor="middle" font-size="11" fill="#5A5A5A">8a</text></svg>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Bedtime varies by</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">1 h 18</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Wake time varies by</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">1 h 30</span></span></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Going to bed within 30 minutes of the same time each night tends to improve sleep quality.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Respiratory rate</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #EEF4FC; color: #1D3F6E; border: 1px solid #C5D8F1">Estimated</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">14.2 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">breaths/min</span></span>
+    <svg width="350" height="110" viewBox="0 0 350 110" role="img" aria-label="Overnight breathing rate over 7 nights, steady around 14 breaths per minute." style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"><rect x="0" y="43.4" width="350" height="19.8" fill="#EFEDE8"/><text x="4" y="55.4" font-size="11" fill="#5A5A5A">your usual range</text><polyline fill="none" stroke="#4A3A78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="6.0,55.6 58.3,49.5 116.7,54.1 175.0,51.0 233.3,55.6 291.7,54.1 344.0,52.6"/><circle cx="6.0" cy="55.6" r="3" fill="#4A3A78"/><text x="6.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Fri</text><circle cx="58.3" cy="49.5" r="3" fill="#4A3A78"/><text x="58.3" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Sat</text><circle cx="116.7" cy="54.1" r="3" fill="#4A3A78"/><text x="116.7" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Sun</text><circle cx="175.0" cy="51.0" r="3" fill="#4A3A78"/><text x="175.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Mon</text><circle cx="233.3" cy="55.6" r="3" fill="#4A3A78"/><text x="233.3" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Tue</text><circle cx="291.7" cy="54.1" r="3" fill="#4A3A78"/><text x="291.7" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Wed</text><circle cx="344.0" cy="52.6" r="4.5" fill="#4A3A78"/><text x="344.0" y="104" text-anchor="middle" font-size="12" fill="#5A5A5A">Thu</text></svg>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Measured while you sleep. A rise of 2+ breaths/min above your usual can be an early sign of illness.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Blood oxygen (SpO2)</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #FCF4EC; color: #8A4510; border: 1px solid #EBC9A8">Experimental</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">95–97%</span>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Overnight range while still. This sensor can be off by several percent on the wrist; use it for trends only, never as a medical reading.</span>
+  </div></section>
+<section id="view-device" hidden style="display: flex; flex-direction: column; gap: 14px"><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; gap: 14px"><span style="flex: none; width: 48px; height: 48px; border-radius: 14px; background: #141414; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6V3h6v3"/><path d="M9 18v3h6v-3"/></svg></span><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 19px; font-weight: 800">FitBand</span><span id="devState" style="font-size: 14px; color: #5A5A5A; display: flex; align-items: center; gap: 6px"><span id="devDot" style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #8A8780"></span><span id="devTxt">Not connected</span></span></div></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Battery</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span id="devBat" style="font-weight: 700">–</span><span id="devBatNote" style="font-size: 13px; color: #5A5A5A">estimated from voltage</span></span></div>
+    <div style="height: 8px; border-radius: 999px; background: #E4E1DA"><div id="devBatBar" style="width: 0%; height: 8px; border-radius: 999px; background: #1E8A5A"></div></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Firmware</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">Test build</span><span style="font-size: 13px; color: #5A5A5A">live readings only</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Last reading received</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span id="devLast" style="font-weight: 700">–</span></span></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px"><div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Band light</span><span id="ledState" style="font-size: 14px; color: #5A5A5A">Connect first</span></div><div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px"><button type="button" data-led="0" disabled style="height: 46px; border: 1px solid #CFCBC3; border-radius: 14px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit">Off</button><button type="button" data-led="1" disabled style="height: 46px; border: 1px solid #CFCBC3; border-radius: 14px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit">Red</button><button type="button" data-led="2" disabled style="height: 46px; border: 1px solid #CFCBC3; border-radius: 14px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit">Green</button><button type="button" data-led="3" disabled style="height: 46px; border: 1px solid #CFCBC3; border-radius: 14px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit">Blue</button></div><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Switches the small light on the band, to check the phone can control it.</span></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Offline storage and sync</span><span style="font-size: 14px; color: #5A5A5A">Healthy</span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Waiting on the band</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">0 minutes</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Saved on this phone</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">All data up to 4:32 pm</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Band memory used</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">4%</span><span style="font-size: 13px; color: #5A5A5A">room for about 3 weeks</span></span></div>
+    <div style="height: 8px; border-radius: 999px; background: #E4E1DA"><div style="width: 4%; height: 8px; border-radius: 999px; background: #2E78D2"></div></div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px; background: #F4F3F0; border-radius: 12px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E8A5A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M20 11a8 8 0 0 0-14.6-4.5L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.6 4.5L20 16"/><path d="M20 21v-5h-5"/></svg>
+      <span style="font-size: 14px; line-height: 1.45">The band stores data while you’re away. If a sync is cut off, the next connection carries on from the last saved minute. Last cut-off: Tue 9:14 pm, finished automatically at 9:16 pm.</span>
+    </div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 4px"><div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Sensors and connection</span><span id="sensChecked" style="font-size: 14px; color: #5A5A5A">Not checked yet</span></div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E4E1DA"><span id="sHrDot" style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #8A8780"></span><div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Heart-rate sensor</span><span id="sHrSub" style="font-size: 13px; color: #5A5A5A">Connect to check</span></div><span id="sHrVal" style="font-size: 14px; font-weight: 700; color: #6A6A6A">–</span></div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E4E1DA"><span id="sBleDot" style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #8A8780"></span><div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Bluetooth</span><span id="sBleSub" style="font-size: 13px; color: #5A5A5A">Not connected</span></div><span id="sBleVal" style="font-size: 14px; font-weight: 700; color: #6A6A6A">Off</span></div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E4E1DA"><span id="sMotDot" style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #8A8780"></span><div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Motion sensor</span><span id="sMotSub" style="font-size: 13px; color: #5A5A5A">Steps and sleep need the next band firmware</span></div><span id="sMotVal" style="font-size: 14px; font-weight: 700; color: #6A6A6A">Not used</span></div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E4E1DA"><span id="sMicDot" style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #8A8780"></span><div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Microphone</span><span id="sMicSub" style="font-size: 13px; color: #5A5A5A">Not used yet</span></div><span id="sMicVal" style="font-size: 14px; font-weight: 700; color: #6A6A6A">Off</span></div><div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #E4E1DA"><span id="sChgDot" style="flex: none; width: 10px; height: 10px; border-radius: 50%; background: #8A8780"></span><div style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-size: 15px; font-weight: 700">Charging</span><span id="sChgSub" style="font-size: 13px; color: #5A5A5A">The band does not report this to the phone yet</span></div><span id="sChgVal" style="font-size: 14px; font-weight: 700; color: #6A6A6A">–</span></div></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 4px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Settings</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Profile</span></div><span style="font-size: 15px; color: #5A5A5A">Age, height, weight ›</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Food preferences</span></div><span style="font-size: 15px; color: #5A5A5A">Vegetarian, home-style ›</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Daily step target</span></div><span style="font-size: 15px; color: #5A5A5A">Adaptive ›</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Heart-rate mode</span></div><span style="font-size: 15px; color: #5A5A5A">Smart ›</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Sitting reminders</span><span style="font-size: 13px; color: #5A5A5A">Phone notification after 60 min still</span></div><span role="switch" aria-checked="true" aria-label="Sitting reminders" style="flex: none; width: 46px; height: 28px; border-radius: 999px; background: #1E8A5A; position: relative; display: block"><span style="position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF"></span></span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Hydration reminders</span><span style="font-size: 13px; color: #5A5A5A">Every 2 h, 8 am – 8 pm</span></div><span role="switch" aria-checked="true" aria-label="Hydration reminders" style="flex: none; width: 46px; height: 28px; border-radius: 999px; background: #1E8A5A; position: relative; display: block"><span style="position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF"></span></span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA"><div style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">Wind-down reminder</span><span style="font-size: 13px; color: #5A5A5A">30 min before your usual bedtime</span></div><span role="switch" aria-checked="false" aria-label="Wind-down reminder" style="flex: none; width: 46px; height: 28px; border-radius: 999px; background: #CFCBC3; position: relative; display: block"><span style="position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF"></span></span></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px"><div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">This build</span></div><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Live from the band today: heart rate, skin contact, battery and the band light. The water log is saved on this phone. Everything else is the planned design, shown with example numbers and marked “Sample data”.</span><button type="button" id="sampleToggle" style="height: 46px; border: 1px solid #CFCBC3; border-radius: 14px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit">Hide sample cards</button></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Coming later</span></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Vibration alerts on the band (needs a small vibration motor) · workout goals · phone notification integration · firmware updates over Bluetooth</span>
+  </div></section>
+<section id="view-summary" hidden style="display: flex; flex-direction: column; gap: 14px"><div class="sample" style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; gap: 6px"><span style="font-size: 15px; font-weight: 700">Preview of the planned app</span><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Cards marked “Sample data” show example numbers, not readings from your band. Live today: heart rate, battery and band light (Heart and Device tabs).</span></div><div class="onlylive" style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px"><span style="font-size: 17px; font-weight: 700">Nothing live here yet</span><span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">The end-of-day summary needs steps and stored data from the band.</span></div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Today’s summary</span><span style="font-size: 14px; color: #5A5A5A">10:30 pm</span></div>
+    <span style="font-size: 32px; font-weight: 800; line-height: 1.1">5 of 7 <span style="font-size: 17px; font-weight: 600; color: #5A5A5A">planned items done</span></span>
+    <div style="height: 10px; border-radius: 999px; background: #E4E1DA"><div style="width: 71%; height: 10px; border-radius: 999px; background: #1E8A5A"></div></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">A solid day: you hit your step target and both walks. Water and breaks fell a little short.</span>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 4px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Planned vs done</span></div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Steps</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">8,000</b></span><span>done <b style="color: #141414">8,420</b></span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Walks</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">3 · 60 min</b></span><span>done <b style="color: #141414">3 · 64 min</b></span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Workout</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">optional</b></span><span>done <b style="color: #141414">Run 28 min</b></span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #FCF4EC; color: #B85C14; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px">–</span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Activity breaks</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">4</b></span><span>done <b style="color: #141414">3</b></span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #FCF4EC; color: #B85C14; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px">–</span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Water</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">8 glasses</b></span><span>done <b style="color: #141414">6 glasses</b></span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Active minutes</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">30 min</b></span><span>done <b style="color: #141414">40 min</b></span></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #E4E1DA">
+      <span style="flex: none; width: 24px; height: 24px; border-radius: 50%; background: #1E8A5A; color: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg></span>
+      <span style="flex: 1; font-size: 15px; font-weight: 700">Bedtime</span>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 1px; font-size: 13px; color: #5A5A5A"><span>planned <b style="color: #141414">11:15 pm</b></span><span>done <b style="color: #141414">tonight</b></span></div>
+    </div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Highlights</span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Most active hour</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">7–8 am</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Longest sitting</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">2 h 15</span></span></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px"><span style="color: #3A3A3A">Calories</span><span style="text-align: right; display: flex; flex-direction: column; align-items: flex-end"><span style="font-weight: 700">2,060 kcal</span><span style="font-size: 13px; color: #5A5A5A">540 active</span></span></div>
+  </div><div style="background: #FCFCFB; border: 1px solid #E4E1DA; border-radius: 22px; padding: 20px; display: flex; flex-direction: column; gap: 12px" class="sample"><span style="align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #5A5A5A; border: 1px dashed #A9A59C; border-radius: 6px; padding: 2px 7px">Sample data</span>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-size: 17px; font-weight: 700">Tomorrow</span><span style="flex: none; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #F1EEF8; color: #4A3A78; border: 1px solid #D6CDEB">Suggestion</span></div>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Your step target and plan for tomorrow are set after tonight’s sleep, from your readiness in the morning.</span>
+    <span style="font-size: 14px; color: #5A5A5A; line-height: 1.45">Tip: you missed one break around 3 pm. A sitting reminder at that time may help.</span>
+  </div></section>
+  <div style="margin-top: auto; padding-top: 10px; text-align: center; font-size: 13px; color: #6A6A6A; letter-spacing: 0.2px">Engineered by Tushar Zombade</div>
+</div>
 <script>
 const $=id=>document.getElementById(id);
-const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const LED_SVC='19b10000-e8f2-537e-4f6c-d104768a1214',LED_CHR='19b10001-e8f2-537e-4f6c-d104768a1214';
-let device=null,ledChar=null,hist=[],lastRx=0;       // hist: [timeMs, bpm|null]
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
+const day=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const clock=ms=>new Date(ms).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}).toLowerCase();
+function ago(ms){const m=Math.round((Date.now()-ms)/60000);if(m<1)return 'just now';if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+' h ago';return Math.round(h/24)+' d ago';}
 
-function say(t){$('msg').textContent=t;}
-function setLinked(on){$('dot').className='dot'+(on?' on':'');$('link').textContent=on?'Connected':'Not connected';
-  $('connect').textContent=on?'Disconnect':'Connect to FitBand';
-  for(const b of document.querySelectorAll('[data-led]'))b.disabled=!on||!ledChar;
-  if(!on){$('bpm').textContent='–';$('bpm').className='empty';$('contact').textContent='Not connected';}}
+/* ---------- tabs ---------- */
+const TAB_ON='flex: 1; height: 42px; border-radius: 12px; background: #141414; color: #FFFFFF; font-weight: 700; font-size: 15px; text-decoration: none; display: flex; align-items: center; justify-content: center';
+const TAB_OFF='flex: 1; height: 42px; border-radius: 12px; border: 1px solid #CFCBC3; background: #FCFCFB; color: #141414; font-weight: 600; font-size: 15px; text-decoration: none; display: flex; align-items: center; justify-content: center';
+const VIEWS=['plan','activity','heart','device','summary'];
+function route(){let v=(location.hash||'#plan').slice(1);if(!VIEWS.includes(v))v='plan';
+  for(const n of VIEWS)$('view-'+n).hidden=n!==v;
+  const tab=v==='summary'?'plan':v;
+  for(const a of document.querySelectorAll('#tabs a')){const on=a.dataset.tab===tab;a.style.cssText=on?TAB_ON:TAB_OFF;if(on)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}
+  window.scrollTo(0,0);if(v==='heart')drawHr();}
+window.addEventListener('hashchange',route);
+
+/* ---------- sample cards on/off ---------- */
+function applySample(){const hide=store.get('fb_nosample',false);document.body.classList.toggle('nosample',hide);$('sampleToggle').textContent=hide?'Show sample cards':'Hide sample cards';}
+$('sampleToggle').addEventListener('click',()=>{store.set('fb_nosample',!store.get('fb_nosample',false));applySample();});
+
+/* ---------- water log (saved on this phone) ---------- */
+const GLASS_ON='width: 28px; height: 34px; border-radius: 6px 6px 9px 9px; background: #5BA4E6; border: 2px solid #5BA4E6; box-sizing: border-box';
+const GLASS_OFF='width: 28px; height: 34px; border-radius: 6px 6px 9px 9px; background: transparent; border: 2px solid #CFCBC3; box-sizing: border-box';
+function water(){const w=store.get('fb_water',{});return w.day===day()?w.n:0;}
+function drawWater(){const n=water(),row=$('h2oRow');$('h2oN').textContent=n;row.setAttribute('aria-label',n+' of 8 glasses logged');row.textContent='';
+  for(let i=0;i<Math.max(8,n);i++){const s=document.createElement('span');s.style.cssText=i<n?GLASS_ON:GLASS_OFF;row.appendChild(s);}
+  $('h2oUndo').hidden=n===0;}
+$('h2oAdd').addEventListener('click',()=>{store.set('fb_water',{day:day(),n:Math.min(30,water()+1)});drawWater();});
+$('h2oUndo').addEventListener('click',()=>{store.set('fb_water',{day:day(),n:Math.max(0,water()-1)});drawWater();});
+
+/* ---------- band state ---------- */
+const LED_SVC='19b10000-e8f2-537e-4f6c-d104768a1214',LED_CHR='19b10001-e8f2-537e-4f6c-d104768a1214';
+let device=null,ledChar=null,linked=false,dropped=false,busy=false,byUser=false;
+let last=store.get('fb_last',null);                       // {t,bpm,bat}
+let hr=(()=>{const h=store.get('fb_hr',null);return h&&h.day===day()?h.pts:[];})();   // today's readings: [ms, bpm]
+let hrDirty=false,contact=false,live=null,liveAt=0;
+function saveHr(){if(!hrDirty)return;hrDirty=false;store.set('fb_hr',{day:day(),pts:hr});store.set('fb_last',last);}
+setInterval(saveHr,15000);window.addEventListener('pagehide',saveHr);
+
+const BT_ICON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>';
+const BTN_CONNECT='height: 44px; padding: 0 18px; border: none; border-radius: 999px; background: #2E78D2; color: #FFFFFF; font-size: 16px; font-weight: 700; font-family: inherit; display: flex; align-items: center; gap: 8px';
+const BTN_LINKED='height: 44px; padding: 0 16px; border: 1px solid #CFCBC3; border-radius: 999px; background: #FCFCFB; color: #141414; font-size: 16px; font-weight: 600; font-family: inherit; display: flex; align-items: center; gap: 8px';
+const CHECK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E8A5A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -3px; margin-right: 6px"><path d="m5 12 5 5L20 7"/></svg>';
+function setRow(k,color,sub,val){$('s'+k+'Dot').style.background=color;if(sub!=null)$('s'+k+'Sub').textContent=sub;$('s'+k+'Val').textContent=val;$('s'+k+'Val').style.color=color==='#8A8780'?'#6A6A6A':color;}
+function header(msg){
+  const b=$('connect'),s=$('status');
+  if(linked){b.style.cssText=BTN_LINKED;b.setAttribute('aria-label','Connected. Tap to disconnect');b.innerHTML='<span style="width: 10px; height: 10px; border-radius: 50%; background: #1E8A5A"></span>Connected';
+    s.style.color='#1E5A3E';s.innerHTML=CHECK+'Connected · live readings';}
+  else{b.style.cssText=BTN_CONNECT;b.removeAttribute('aria-label');b.innerHTML=BT_ICON+(busy?'Connecting…':'Connect');b.disabled=busy;
+    if(msg){s.style.color='#8A4510';s.textContent=msg;}
+    else if(dropped){s.style.color='#8A4510';s.textContent='Disconnected'+(last?'. Readings up to '+clock(last.t)+' are saved on this phone. Connect again to continue.':'. Connect again to continue.');}
+    else{s.style.color='#5A5A5A';s.textContent=last?'Not connected · last updated '+ago(last.t)+', '+clock(last.t):'Not connected';}}
+  if(linked)b.disabled=false;
+  // Device tab
+  $('devDot').style.background=linked?'#1E8A5A':'#8A8780';$('devState').style.color=linked?'#1E5A3E':'#5A5A5A';$('devTxt').textContent=linked?'Connected':'Not connected';
+  const bat=last&&last.bat!=null?last.bat:null;
+  $('devBat').textContent=bat==null?'–':bat+'%';$('devBatBar').style.width=(bat==null?0:bat)+'%';
+  $('devBatNote').textContent=bat==null?'connect to read':(linked?'estimated from voltage':'when last connected, '+clock(last.t));
+  $('devLast').textContent=last?(new Date(last.t).toDateString()===new Date().toDateString()?'Today, ':new Date(last.t).toLocaleDateString([], {day:'numeric',month:'short'})+', ')+clock(last.t):'–';
+  setRow('Ble',linked?'#1E8A5A':'#8A8780',linked?'Phone is linked to the band':'Not connected',linked?'OK':'Off');
+  if(!linked)setRow('Hr','#8A8780','Connect to check','–');
+  for(const x of document.querySelectorAll('[data-led]'))x.disabled=!linked||!ledChar;
+  if(!linked||!ledChar)$('ledState').textContent=linked?'Not available':'Connect first';
+}
+
+/* ---------- heart rate ---------- */
+function heartCard(){
+  const fresh=linked&&live!=null&&Date.now()-liveAt<4000;
+  if(fresh){$('hrNow').textContent=live;$('hrNow').style.color='#141414';$('hrUnit').textContent='bpm now';$('hrContact').textContent='Skin contact, steady beat.';}
+  else if(last&&last.bpm){$('hrNow').textContent=last.bpm;$('hrNow').style.color=linked?'#141414':'#6A6A6A';$('hrUnit').textContent='bpm · last reading '+clock(last.t);
+    $('hrContact').textContent=linked?'No steady beat right now. Hold the sensor still and firm: a fingertip, or pressed tight on the wrist.':'Connect the band to see live readings.';}
+  else{$('hrNow').textContent='–';$('hrNow').style.color='#6A6A6A';$('hrUnit').textContent='bpm';
+    $('hrContact').textContent=linked?'No steady beat yet. Hold the sensor still and firm: a fingertip, or pressed tight on the wrist.':'Connect the band to see live readings.';}
+  if(hr.length){let lo=1e9,hi=0;for(const p of hr){if(p[1]<lo)lo=p[1];if(p[1]>hi)hi=p[1];}$('hrRange').textContent=lo+' / '+hi+' bpm';}else $('hrRange').textContent='–';
+}
+let hrGeom=null;
+function drawHr(){
+  const path=$('hrPath');
+  if(!hr.length){path.setAttribute('d','');$('hrEmpty').setAttribute('visibility','visible');$('hrYhi').textContent='';$('hrYlo').textContent='';$('hrT0').textContent='';$('hrT1').textContent='';hrGeom=null;return;}
+  $('hrEmpty').setAttribute('visibility','hidden');
+  let lo=1e9,hi=0;for(const p of hr){if(p[1]<lo)lo=p[1];if(p[1]>hi)hi=p[1];}
+  lo=Math.floor((lo-5)/10)*10;hi=Math.ceil((hi+5)/10)*10;if(hi-lo<30){const m=(lo+hi)/2;lo=Math.floor((m-15)/10)*10;hi=lo+30;}
+  const t0=hr[0][0],t1=Math.max(hr[hr.length-1][0],t0+60000);
+  const X=t=>(t-t0)/(t1-t0)*338,Y=v=>100-(v-lo)/(hi-lo)*90;
+  let d='',prev=null;
+  for(const p of hr){d+=(prev!=null&&p[0]-prev<30000?'L':'M')+X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)+' ';prev=p[0];}
+  path.setAttribute('d',d);$('hrYhi').textContent=hi;$('hrYlo').textContent=lo;$('hrT0').textContent=clock(t0);$('hrT1').textContent=clock(t1);
+  hrGeom={X,Y};
+}
+function hrHover(e){if(!hrGeom||!hr.length)return;const svg=$('hrSvg'),r=svg.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*350;
+  let best=null,bd=1e9;for(const p of hr){const d=Math.abs(hrGeom.X(p[0])-x);if(d<bd){bd=d;best=p;}}
+  if(!best)return;const px=hrGeom.X(best[0]),py=hrGeom.Y(best[1]);
+  $('hrCross').setAttribute('x1',px);$('hrCross').setAttribute('x2',px);$('hrCross').setAttribute('visibility','visible');
+  $('hrDot').setAttribute('cx',px);$('hrDot').setAttribute('cy',py);$('hrDot').setAttribute('visibility','visible');
+  $('hrTip').textContent=best[1]+' bpm at '+new Date(best[0]).toLocaleTimeString([], {hour:'numeric',minute:'2-digit',second:'2-digit'}).toLowerCase();}
+function hrLeave(){$('hrCross').setAttribute('visibility','hidden');$('hrDot').setAttribute('visibility','hidden');$('hrTip').textContent='';}
+$('hrSvg').addEventListener('pointermove',hrHover);$('hrSvg').addEventListener('pointerdown',hrHover);$('hrSvg').addEventListener('pointerleave',hrLeave);
 
 function onHr(e){const v=e.target.value,f=v.getUint8(0),bpm=(f&1)?v.getUint16(1,true):v.getUint8(1);
-  const supported=!!(f&4),contact=supported?!!(f&2):bpm>0,ok=contact&&bpm>0;lastRx=Date.now();
-  $('bpm').textContent=ok?bpm:'–';$('bpm').className=ok?'':'empty';
-  $('contact').textContent=ok?'✓ Skin contact, steady beat':'○ No steady beat found. Rest a fingertip lightly on the sensor and hold still.';
-  hist.push([Date.now(),ok?bpm:null]);if(hist.length>900)hist.shift();render();}
-function onBat(e){$('bat').textContent=e.target.value.getUint8(0)+'%';}
-function showLed(n){for(const b of document.querySelectorAll('[data-led]'))b.setAttribute('aria-pressed',String(+b.dataset.led===n));}
+  const supported=!!(f&4);contact=(supported?!!(f&2):bpm>0)&&bpm>0;const now=Date.now();
+  if(contact){live=bpm;liveAt=now;last=Object.assign({},last||{},{t:now,bpm:bpm});
+    const n=hr.length;if(n&&now-hr[n-1][0]<5000)hr[n-1][1]=Math.round((hr[n-1][1]+bpm)/2);else{hr.push([now,bpm]);if(hr.length>6000)hr.shift();}
+    hrDirty=true;}
+  setRow('Hr',contact?'#1E8A5A':'#B85C14',contact?'Good skin contact':'No steady beat. Hold it still and firm.',contact?'OK':'No contact');
+  $('sensChecked').textContent='Checked '+clock(now);
+  heartCard();if(!$('view-heart').hidden)drawHr();}
+function onBat(v){last=Object.assign({},last||{t:Date.now()},{bat:v.getUint8(0)});if(!last.t)last.t=Date.now();hrDirty=true;header();}
+function showLed(n){const names=['Off','Red','Green','Blue'];$('ledState').textContent=names[n]||'Off';
+  for(const b of document.querySelectorAll('[data-led]')){const on=+b.dataset.led===n;b.setAttribute('aria-pressed',String(on));b.style.background=on?'#141414':'#FCFCFB';b.style.color=on?'#FFFFFF':'#141414';}}
 
 async function connect(){
-  if(!navigator.bluetooth){say('This browser cannot use Bluetooth. On iPhone open this page in the Bluefy app; on Android or a laptop use Chrome or Edge.');return;}
+  if(!navigator.bluetooth){header('This browser cannot use Bluetooth. On iPhone open this page in the Bluefy app; on Android or a laptop use Chrome or Edge.');return;}
+  busy=true;dropped=false;header();
   try{
-    say('Choose FitBand in the list…');
     device=await navigator.bluetooth.requestDevice({filters:[{services:['heart_rate']}],optionalServices:['battery_service',LED_SVC]});
-    device.addEventListener('gattserverdisconnected',()=>{ledChar=null;setLinked(false);say('Disconnected. Tap Connect to link again.');});
-    say('Connecting…');
+    device.addEventListener('gattserverdisconnected',()=>{ledChar=null;linked=false;dropped=!byUser;byUser=false;live=null;saveHr();header();heartCard();});
     const g=await device.gatt.connect();
-    const hr=await (await g.getPrimaryService('heart_rate')).getCharacteristic('heart_rate_measurement');
-    hr.addEventListener('characteristicvaluechanged',onHr);await hr.startNotifications();
-    try{const b=await (await g.getPrimaryService('battery_service')).getCharacteristic('battery_level');
-      $('bat').textContent=(await b.readValue()).getUint8(0)+'%';b.addEventListener('characteristicvaluechanged',onBat);await b.startNotifications();}catch(e){}
+    const h=await (await g.getPrimaryService('heart_rate')).getCharacteristic('heart_rate_measurement');
+    h.addEventListener('characteristicvaluechanged',onHr);await h.startNotifications();
+    linked=true;busy=false;
+    try{const b=await (await g.getPrimaryService('battery_service')).getCharacteristic('battery_level');onBat(await b.readValue());
+      b.addEventListener('characteristicvaluechanged',e=>onBat(e.target.value));await b.startNotifications();}catch(e){}
     try{ledChar=await (await g.getPrimaryService(LED_SVC)).getCharacteristic(LED_CHR);showLed((await ledChar.readValue()).getUint8(0));}catch(e){ledChar=null;}
-    setLinked(true);say('Connected to '+(device.name||'the band')+'. Heart rate updates every second.');
-  }catch(e){setLinked(false);say(e&&e.name==='NotFoundError'?'No band chosen. Tap Connect to try again.':'Could not connect: '+(e&&e.message||e)+'. Close other apps linked to the band (nRF Connect) and try again.');}
+    header();heartCard();
+  }catch(e){busy=false;linked=false;
+    header(e&&e.name==='NotFoundError'?'No band chosen. Tap Connect to try again.':'Could not connect: '+(e&&e.message||e)+'. Close other apps linked to the band and try again.');}
 }
-$('connect').addEventListener('click',()=>{if(device&&device.gatt&&device.gatt.connected)device.gatt.disconnect();else connect();});
-for(const b of document.querySelectorAll('[data-led]'))b.addEventListener('click',async()=>{
-  if(!ledChar)return;const n=+b.dataset.led;
-  try{await ledChar.writeValue(Uint8Array.of(n));showLed(n);}catch(e){say('Could not change the light: '+(e&&e.message||e));}});
+$('connect').addEventListener('click',()=>{if(linked&&device&&device.gatt.connected){byUser=true;device.gatt.disconnect();}else if(!busy)connect();});
+for(const b of document.querySelectorAll('[data-led]'))b.addEventListener('click',async()=>{if(!ledChar)return;const n=+b.dataset.led;
+  try{await ledChar.writeValue(Uint8Array.of(n));showLed(n);}catch(e){$('ledState').textContent='Could not change';}});
 
-function prep(c){const r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
-  if(c.width!==Math.round(r.width*d)||c.height!==Math.round(r.height*d)){c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);}
-  const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,r.width,r.height);return[g,r.width,r.height];}
-function draw(){
-  const c=$('cHr'),tip=$('tHr'),now=Date.now(),pts=hist.filter(h=>now-h[0]<=600000).map(h=>({x:-(now-h[0])/60000,y:h[1]}));
-  const vals=pts.map(p=>p.y).filter(v=>v!=null);
-  let a=60,b=120;if(vals.length){a=Math.floor((Math.min(...vals)-8)/10)*10;b=Math.ceil((Math.max(...vals)+8)/10)*10;if(b-a<40){const m=(a+b)/2;a=Math.floor((m-20)/10)*10;b=a+40;}}
-  const step=(b-a)>80?40:(b-a)>40?20:10;
-  const [g,W,H]=prep(c),L=40,R=40,T=10,B=22,pw=W-L-R,ph=H-T-B,X=x=>L+(x+10)/10*pw,Y=y=>T+(1-(y-a)/(b-a))*ph;
-  g.font='12px system-ui,-apple-system,"Segoe UI",sans-serif';g.textBaseline='middle';g.strokeStyle=css('--grid');g.lineWidth=1;g.fillStyle=css('--text-muted');g.textAlign='right';
-  for(let t=a;t<=b;t+=step){const y=Math.round(Y(t))+.5;g.beginPath();g.moveTo(L,y);g.lineTo(L+pw,y);g.stroke();g.fillText(t,L-6,y);}
-  g.textBaseline='alphabetic';g.textAlign='left';g.fillText('10 min ago',L,H-5);g.textAlign='center';g.fillText('5 min',X(-5),H-5);g.textAlign='right';g.fillText('now',L+pw,H-5);
-  if(!vals.length){g.textAlign='center';g.fillStyle=css('--text-secondary');g.fillText('No heart-rate readings yet',L+pw/2,T+ph/2);tip.style.display='none';return;}
-  g.strokeStyle=css('--series-1');g.lineWidth=2;g.lineJoin='round';g.lineCap='round';g.beginPath();let pen=false;
-  for(const p of pts){if(p.y==null){pen=false;continue;}if(pen)g.lineTo(X(p.x),Y(p.y));else g.moveTo(X(p.x),Y(p.y));pen=true;}g.stroke();
-  let lp=null;for(let i=pts.length-1;i>=0&&pts.length-i<8;i--)if(pts[i].y!=null){lp=pts[i];break;}
-  if(lp){g.beginPath();g.arc(X(lp.x),Y(lp.y),4,0,6.3);g.fillStyle=css('--series-1');g.fill();g.fillStyle=css('--text-primary');g.textAlign='left';g.textBaseline='middle';g.fillText(lp.y,X(lp.x)+8,Y(lp.y));}
-  if(c._hx!=null){let best=null,bd=1e9;for(const p of pts){if(p.y==null)continue;const d=Math.abs(X(p.x)-c._hx);if(d<bd){bd=d;best=p;}}
-    if(best&&bd<30){const x=X(best.x),y=Y(best.y);g.strokeStyle=css('--text-muted');g.lineWidth=1;g.beginPath();g.moveTo(Math.round(x)+.5,T);g.lineTo(Math.round(x)+.5,T+ph);g.stroke();
-      g.beginPath();g.arc(x,y,5,0,6.3);g.fillStyle=css('--series-1');g.fill();g.lineWidth=2;g.strokeStyle=css('--surface-1');g.stroke();
-      tip.textContent=best.y+' bpm · '+(best.x>-1?Math.round(-best.x*60)+' s ago':(-best.x).toFixed(1)+' min ago');tip.style.display='block';
-      const tw=tip.offsetWidth;tip.style.left=Math.max(0,Math.min(W-tw,x-tw/2))+'px';}else tip.style.display='none';}
-  else tip.style.display='none';
-}
-function render(){
-  const vals=hist.map(h=>h[1]).filter(v=>v!=null),now=Date.now();
-  $('cnt').textContent=vals.length;$('range').textContent=vals.length?Math.min(...vals)+'–'+Math.max(...vals)+' bpm':' ';
-  $('tbl').innerHTML=hist.slice(-12).reverse().map(h=>'<tr><td>'+Math.round((now-h[0])/1000)+'</td><td>'+(h[1]==null?'no reading':h[1])+'</td></tr>').join('')||'<tr><td colspan="2">No readings yet</td></tr>';
-  draw();
-}
-const c=$('cHr');c._hx=null;
-const mv=e=>{c._hx=e.clientX-c.getBoundingClientRect().left;draw();};
-c.addEventListener('pointermove',mv);c.addEventListener('pointerdown',mv);c.addEventListener('pointerleave',()=>{c._hx=null;draw();});
-window.addEventListener('resize',draw);setInterval(draw,2000);render();
-if(!navigator.bluetooth)say('This browser cannot use Bluetooth. On iPhone open this page in the Bluefy app; on Android or a laptop use Chrome or Edge.');
+applySample();drawWater();header();heartCard();route();
+setInterval(()=>{if(!linked&&!busy&&!dropped)header();heartCard();},20000);
 </script>
 </body>
 </html>
